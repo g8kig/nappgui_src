@@ -4,20 +4,106 @@
 #include "res_guihello.h"
 #include <gui/guiall.h>
 
+typedef struct _treenode_t TreeNode;
 typedef struct _appdata_t AppData;
+
+struct _treenode_t
+{
+    char_t name[64];
+    ArrPt(TreeNode) *children;
+    bool_t expanded;
+};
 
 struct _appdata_t
 {
     TableView *table;
     TextView *text;
     char_t temp_string[256];
+    ArrPt(TreeNode) *tree_roots;
 };
+
+static const uint32_t i_NUM_ROOTS = 4;
+static const uint32_t i_MAX_DEPTH = 5;
+DeclPt(TreeNode);
+
+/*---------------------------------------------------------------------------*/
+
+static void i_destroy_node(TreeNode **node)
+{
+    cassert_no_null(node);
+    cassert_no_null(*node);
+    arrpt_destopt(&(*node)->children, i_destroy_node, TreeNode);
+    heap_delete(node, TreeNode);
+}
+
+/*---------------------------------------------------------------------------*/
+
+static TreeNode *i_create_node(const char_t *path, const uint32_t index, const uint32_t depth)
+{
+    TreeNode *node = heap_new(TreeNode);
+    char_t child_path[64];
+    uint32_t nchildren;
+
+    bstd_sprintf(node->name, sizeof(node->name), "Node %s%d", path, index);
+    bstd_sprintf(child_path, sizeof(child_path), "%s%d.", path, index);
+    node->expanded = FALSE;
+    node->children = NULL;
+    nchildren = depth < i_MAX_DEPTH ? bmath_randi(0, 4) : 0;
+
+    if (nchildren > 0)
+    {
+        uint32_t i;
+        node->children = arrpt_create(TreeNode);
+        for (i = 0; i < nchildren; ++i)
+        {
+            TreeNode *child = i_create_node(child_path, i, depth + 1);
+            arrpt_append(node->children, child, TreeNode);
+        }
+    }
+
+    return node;
+}
+
+/*---------------------------------------------------------------------------*/
+
+static ArrPt(TreeNode) *i_build_tree(void)
+{
+    ArrPt(TreeNode) *roots = arrpt_create(TreeNode);
+    uint32_t i;
+    bmath_rand_seed(1234);
+    for (i = 0; i < i_NUM_ROOTS; ++i)
+    {
+        TreeNode *root = i_create_node("", i, 0);
+        arrpt_append(roots, root, TreeNode);
+    }
+    return roots;
+}
 
 /*---------------------------------------------------------------------------*/
 
 static void i_destroy_appdata(AppData **data)
 {
+    arrpt_destopt(&(*data)->tree_roots, i_destroy_node, TreeNode);
     heap_delete(data, AppData);
+}
+
+/*---------------------------------------------------------------------------*/
+
+static void i_OnTreeViewCheck(AppData *data, Event *e)
+{
+    const EvButton *p = event_params(e, EvButton);
+    if (p->state == ekGUI_ON)
+    {
+        cassert(data->tree_roots == NULL);
+        data->tree_roots = i_build_tree();
+        tableview_tree(data->table, 0);
+    }
+    else
+    {
+        tableview_tree(data->table, UINT32_MAX);
+        arrpt_destroy(&data->tree_roots, i_destroy_node, TreeNode);
+    }
+    tableview_update(data->table);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -36,6 +122,39 @@ static void i_OnTableData(AppData *data, Event *e)
         break;
     }
 
+    case ekGUI_EVENT_TBL_NROOTS:
+    {
+        uint32_t *n = event_result(e, uint32_t);
+        *n = i_NUM_ROOTS;
+        break;
+    }
+
+    case ekGUI_EVENT_TBL_NODEINFO:
+    {
+        const EvTbNode *p = event_params(e, EvTbNode);
+        EvTbNodeInfo *info = event_result(e, EvTbNodeInfo);
+        ArrPt(TreeNode) *children = NULL;
+        TreeNode *node = NULL;
+
+        if (p->parent != NULL)
+            children = cast(p->parent, TreeNode)->children;
+        else
+            children = data->tree_roots;
+
+        node = arrpt_get(children, p->child, TreeNode);
+        info->node = node;
+        info->nchildren = node->children != NULL ? arrpt_size(node->children, TreeNode) : 0;
+        info->expanded = node->expanded;
+        break;
+    }
+
+    case ekGUI_EVENT_TBL_EXPAND:
+    {
+        const EvTbExpand *p = event_params(e, EvTbExpand);
+        cast(p->node, TreeNode)->expanded = p->expanded;
+        break;
+    }
+
     case ekGUI_EVENT_TBL_CELL:
     {
         const EvTbPos *pos = event_params(e, EvTbPos);
@@ -45,7 +164,10 @@ static void i_OnTableData(AppData *data, Event *e)
         {
         case 0:
             cell->align = ekLEFT;
-            bstd_sprintf(data->temp_string, sizeof(data->temp_string), "Name %d", pos->row);
+            if (pos->node != NULL)
+                bstd_sprintf(data->temp_string, sizeof(data->temp_string), "%s", cast_const(pos->node, TreeNode)->name);
+            else
+                bstd_sprintf(data->temp_string, sizeof(data->temp_string), "Name %d", pos->row);
             break;
 
         case 1:
@@ -168,6 +290,14 @@ static void i_OnGridCheck(AppData *data, Event *e)
 
 /*---------------------------------------------------------------------------*/
 
+static void i_OnUpdateTable(AppData *data, Event *e)
+{
+    tableview_update(data->table);
+    unref(e);
+}
+
+/*---------------------------------------------------------------------------*/
+
 static void i_OnPrintsel(AppData *data, Event *e)
 {
     const ArrSt(uint32_t) *sel = tableview_selected(data->table);
@@ -187,7 +317,8 @@ static void i_OnPrintsel(AppData *data, Event *e)
 static Layout *i_table_control_layout(AppData *data)
 {
     Layout *layout1 = layout_create(3, 1);
-    Layout *layout2 = layout_create(1, 6);
+    Layout *layout2 = layout_create(1, 7);
+    Layout *layout3 = layout_create(2, 1);
     Button *button1 = button_radio();
     Button *button2 = button_radio();
     Button *button3 = button_radio();
@@ -195,46 +326,57 @@ static Layout *i_table_control_layout(AppData *data)
     Button *button5 = button_check();
     Button *button6 = button_check();
     Button *button7 = button_check();
-    Button *button8 = button_push();
+    Button *button8 = button_check();
+    Button *button9 = button_push();
+    Button *button10 = button_push();
     button_text(button1, "Single select");
     button_text(button2, "Multi select");
     button_text(button3, "Preserve select");
-    button_text(button4, "Resizable headers");
-    button_text(button5, "Clickable headers");
-    button_text(button6, "Freeze 0 and 1 columns");
-    button_text(button7, "Draw grid lines");
-    button_text(button8, "Print selected rows");
+    button_text(button4, "TreeView mode");
+    button_text(button5, "Resizable headers");
+    button_text(button6, "Clickable headers");
+    button_text(button7, "Freeze 0 and 1 columns");
+    button_text(button8, "Draw grid lines");
+    button_text(button9, "Print selected rows");
+    button_text(button10, "Update table");
     button_state(button1, ekGUI_ON);
-    button_state(button4, ekGUI_ON);
     button_state(button5, ekGUI_ON);
     button_state(button6, ekGUI_ON);
     button_state(button7, ekGUI_ON);
+    button_state(button8, ekGUI_ON);
     layout_button(layout1, button1, 0, 0);
     layout_button(layout1, button2, 1, 0);
     layout_button(layout1, button3, 2, 0);
+    layout_button(layout3, button9, 0, 0);
+    layout_button(layout3, button10, 1, 0);
     layout_layout(layout2, layout1, 0, 0);
     layout_button(layout2, button4, 0, 1);
     layout_button(layout2, button5, 0, 2);
     layout_button(layout2, button6, 0, 3);
     layout_button(layout2, button7, 0, 4);
     layout_button(layout2, button8, 0, 5);
+    layout_layout(layout2, layout3, 0, 6);
     layout_hmargin(layout1, 0, 5.f);
     layout_hmargin(layout1, 1, 5.f);
+    layout_hmargin(layout3, 0, 5.f);
     layout_vmargin(layout2, 0, 5.f);
     layout_vmargin(layout2, 1, 5.f);
     layout_vmargin(layout2, 2, 5.f);
     layout_vmargin(layout2, 3, 5.f);
     layout_vmargin(layout2, 4, 5.f);
+    layout_vmargin(layout2, 5, 5.f);
     layout_halign(layout2, 0, 0, ekLEFT);
-    layout_halign(layout2, 0, 5, ekLEFT);
+    layout_halign(layout2, 0, 6, ekLEFT);
     button_OnClick(button1, listener(data, i_OnMultisel, AppData));
     button_OnClick(button2, listener(data, i_OnMultisel, AppData));
     button_OnClick(button3, listener(data, i_OnMultisel, AppData));
-    button_OnClick(button4, listener(data, i_OnResizeCheck, AppData));
-    button_OnClick(button5, listener(data, i_OnHeaderCheck, AppData));
-    button_OnClick(button6, listener(data, i_OnFreezeCheck, AppData));
-    button_OnClick(button7, listener(data, i_OnGridCheck, AppData));
-    button_OnClick(button8, listener(data, i_OnPrintsel, AppData));
+    button_OnClick(button4, listener(data, i_OnTreeViewCheck, AppData));
+    button_OnClick(button5, listener(data, i_OnResizeCheck, AppData));
+    button_OnClick(button6, listener(data, i_OnHeaderCheck, AppData));
+    button_OnClick(button7, listener(data, i_OnFreezeCheck, AppData));
+    button_OnClick(button8, listener(data, i_OnGridCheck, AppData));
+    button_OnClick(button9, listener(data, i_OnPrintsel, AppData));
+    button_OnClick(button10, listener(data, i_OnUpdateTable, AppData));
     return layout2;
 }
 

@@ -30,6 +30,15 @@
     * `cell_tabs()`.
     * `layout_tabs()`.
     * `layout_get_tabs()`.
+- TreeView mode support in `TableView`. [Issue](https://github.com/frang75/nappgui_src/issues/36). [Doc](). [Commit]().
+    - `tableview_tree()`.
+    - `tableview_node_row()`.
+    - `tableview_row_node()`.
+    - New events: `ekGUI_EVENT_TBL_NROOTS`, `ekGUI_EVENT_TBL_NODEINFO`, `ekGUI_EVENT_TBL_EXPAND`.
+    - New types: `EvTbNode`, `EvTbNodeInfo`, `EvTbExpand`.
+    - New field `void *node` in `EvTbPos`, populated in tree mode.
+    - `[+]/[Numpad+]` expands the focused node.
+    - `[-]/[Numpad-]` collapses the focused node.
 
 ### Fixed
 
