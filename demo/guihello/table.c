@@ -122,10 +122,19 @@ static void i_OnTableData(AppData *data, Event *e)
         break;
     }
 
-    case ekGUI_EVENT_TBL_NROOTS:
+    case ekGUI_EVENT_TBL_NCHILDREN:
     {
+        void *parent = event_params(e, void);
         uint32_t *n = event_result(e, uint32_t);
-        *n = i_NUM_ROOTS;
+        if (parent == NULL)
+        {
+            *n = i_NUM_ROOTS;
+        }
+        else
+        {
+            ArrPt(TreeNode) *children = cast(parent, TreeNode)->children;
+            *n = arrpt_size(children, TreeNode);
+        }
         break;
     }
 
@@ -141,9 +150,9 @@ static void i_OnTableData(AppData *data, Event *e)
         else
             children = data->tree_roots;
 
-        node = arrpt_get(children, p->child, TreeNode);
+        node = arrpt_get(children, p->ichild, TreeNode);
         info->node = node;
-        info->nchildren = node->children != NULL ? arrpt_size(node->children, TreeNode) : 0;
+        info->children = node->children != NULL ? (arrpt_size(node->children, TreeNode) > 0) : FALSE;
         info->expanded = node->expanded;
         break;
     }

@@ -190,7 +190,7 @@ typedef enum _gui_event_t
     ekGUI_EVENT_TBL_SEL,
     ekGUI_EVENT_TBL_HEADCLICK,
     ekGUI_EVENT_TBL_ROWCLICK,
-    ekGUI_EVENT_TBL_NROOTS,
+    ekGUI_EVENT_TBL_NCHILDREN,
     ekGUI_EVENT_TBL_NODEINFO,
     ekGUI_EVENT_TBL_EXPAND,
     ekGUI_EVENT_IDLE
@@ -1122,13 +1122,13 @@ struct _evtbcell_t
 struct _evtbnode_t
 {
     void *parent;
-    uint32_t child;
+    uint32_t ichild;
 };
 
 struct _evtbnodeinfo_t
 {
     void *node;
-    uint32_t nchildren;
+    bool_t children;
     bool_t expanded;
 };
 

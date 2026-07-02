@@ -24,21 +24,26 @@
     - `http_cookie_search()`.
     - `http_cookie_delete()`.
     - `http_cookie_delete_all()`.
-- Support for tab control. [Commit]().
+- Support for tab control. [Commit](https://github.com/frang75/nappgui_src/commit/930282053741904dad3e5aeda91da0ef2849e6a1).
     * New `Tabs` widget `tabs.h`. [Doc](https://nappgui.com/en/gui/tabs.html).
     * `guicontrol_tabs()`.
     * `cell_tabs()`.
     * `layout_tabs()`.
     * `layout_get_tabs()`.
-- TreeView mode support in `TableView`. [Issue](https://github.com/frang75/nappgui_src/issues/36). [Doc](). [Commit]().
+- TreeView mode support in `TableView`. [Issue](https://github.com/frang75/nappgui_src/issues/36). [Doc](https://nappgui.com/en/gui/tableview.html#h1). [Commit](https://github.com/frang75/nappgui_src/commit/29c7bd3e0243eb38aa9a7e2eafe6cf74830c4ee8).
     - `tableview_tree()`.
     - `tableview_node_row()`.
     - `tableview_row_node()`.
-    - New events: `ekGUI_EVENT_TBL_NROOTS`, `ekGUI_EVENT_TBL_NODEINFO`, `ekGUI_EVENT_TBL_EXPAND`.
+    - New events: `ekGUI_EVENT_TBL_NCHILDREN`, `ekGUI_EVENT_TBL_NODEINFO`, `ekGUI_EVENT_TBL_EXPAND`.
     - New types: `EvTbNode`, `EvTbNodeInfo`, `EvTbExpand`.
     - New field `void *node` in `EvTbPos`, populated in tree mode.
     - `[+]/[Numpad+]` expands the focused node.
     - `[-]/[Numpad-]` collapses the focused node.
+- TreeSt/TreePt new data structures. [Doc](). [Doc](). [Commit]().
+    - `core/treest.h`.
+    - `core/treept.h`.
+    - `core/treest.hpp`.
+    - `core/treept.hpp`.
 
 ### Fixed
 
