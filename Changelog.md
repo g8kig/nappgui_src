@@ -1,6 +1,8 @@
 # NAppGUI Changelog
 
-## v1.6.2 - WIP
+## v1.6.3 - WIP
+
+## v1.6.2 - July 02, 2026 (r6905)
 
 ### Added
 
@@ -15,7 +17,7 @@
     - `http_put()`.
     - `http_patch()`.
     - `http_delete()`.
-- HTTP cookies support. [Commit](https://github.com/frang75/nappgui_src/commit/7e3c8d30a71c8264a0d235b1ce92b7434f095d0f).
+- HTTP cookies support. [Issue](https://github.com/frang75/nappgui_src/issues/245). [Commit](https://github.com/frang75/nappgui_src/commit/7e3c8d30a71c8264a0d235b1ce92b7434f095d0f).
     - `http_cookies_policy()`.
     - `http_cookies_reload()`.
     - `http_cookies_size()`.
@@ -24,7 +26,7 @@
     - `http_cookie_search()`.
     - `http_cookie_delete()`.
     - `http_cookie_delete_all()`.
-- Support for tab control. [Commit](https://github.com/frang75/nappgui_src/commit/930282053741904dad3e5aeda91da0ef2849e6a1).
+- Support for tab control. [Issue](https://github.com/frang75/nappgui_src/issues/37). [Commit](https://github.com/frang75/nappgui_src/commit/930282053741904dad3e5aeda91da0ef2849e6a1).
     * New `Tabs` widget `tabs.h`. [Doc](https://nappgui.com/en/gui/tabs.html).
     * `guicontrol_tabs()`.
     * `cell_tabs()`.
@@ -39,7 +41,7 @@
     - New field `void *node` in `EvTbPos`, populated in tree mode.
     - `[+]/[Numpad+]` expands the focused node.
     - `[-]/[Numpad-]` collapses the focused node.
-- TreeSt/TreePt new data structures. [Doc](). [Doc](). [Commit]().
+- TreeSt/TreePt new data structures. [Doc](https://nappgui.com/en/core/treest.html). [Commit](https://github.com/frang75/nappgui_src/commit/6d2d5cbe202a0106f63f4a8e26bbc6bd847ce03e).
     - `core/treest.h`.
     - `core/treept.h`.
     - `core/treest.hpp`.

@@ -5,6 +5,7 @@
  * https://nappgui.com/en/legal/license.html
  *
  * File: treept.hxx
+ * https://nappgui.com/en/core/treept.html
  *
  */
 

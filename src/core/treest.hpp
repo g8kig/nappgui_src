@@ -5,6 +5,7 @@
  * https://nappgui.com/en/legal/license.html
  *
  * File: treest.hpp
+ * https://nappgui.com/en/core/treest.html
  *
  */
 
